@@ -61,7 +61,7 @@ def run():
     while(''.join(instructionRegister[0:4]) != '0000'
           and programCounter <= maxCounter):
 
-        print(''.join(instructionRegister))
+        decode()
 
         num += 1
         for x in range(len(bin(num)[2:].zfill(16))):
@@ -73,6 +73,10 @@ def run():
 def fetch(num):
     for x in range(16):
         instructionRegister[x] = memory[num][x]
+
+
+def decode():
+    print(''.join(instructionRegister))
 
 
 def load(string):
