@@ -1,11 +1,11 @@
 import sys
 from os.path import exists
 
-memory = [[0] * 16] * 65536
-register = [[0] * 16] * 8
-instructionPointer = [0] * 16
-instructionRegister = [0] * 16
-nzpRegister = [0] * 3
+memory = [] #[[0] * 16] * 65536
+register = [] #[[0] * 16] * 8
+instructionPointer = []
+instructionRegister = []
+nzpRegister = []
 
 
 def startmachine():
@@ -31,136 +31,219 @@ def cmd():
         if cmdIn.lower() == "run":
             run()
 
-
 def initmemory():
     for x in range(65536):
-        for y in range(16):
-            memory[x][y] = 0
-
+        memory.append([0] * 16)
 
 def initregisters():
     for x in range(8):
-        for y in range(16):
-            register[x][y] = 0
+        register.append([0] * 16)
+
     for x in range(16):
-        instructionPointer[x] = 0
-        instructionRegister[x] = 0
+        instructionPointer.append([0])
+        instructionRegister.append([0])
     for x in range(3):
-        nzpRegister[x] = 0
+        nzpRegister.append([0])
 
 
 def run():
-    programCounter = 0
+    while True:
+        fetch()
+        cmds = decode(''.join(instructionRegister))
+        print(list(cmds))
+        execute(cmds)
+
+        if (''.join(instructionRegister[0:4]) == '0000'):
+            break
+
+
+def fetch():
     num = ""
     for x in range(16):
         num += instructionPointer[x]
-    num = int(num)
-    maxCounter = ((num // 512) + 1) * 512
-    fetch(num)
+    num = int(num, base=2)
 
-    while(''.join(instructionRegister[0:4]) != '0000'
-          and programCounter <= maxCounter):
-
-        decode(''.join(instructionRegister))
-
-        num += 1
-        for x in range(len(bin(num)[2:].zfill(16))):
-            instructionPointer[x] = bin(num)[2:].zfill(16)[x]
-        fetch(num)
-        programCounter += 1
-
-
-def fetch(num):
     for x in range(16):
-        instructionRegister[x] = memory[num][x]
+        instructionRegister[x] = str(memory[num][x])
+
+    num += 1
+    for x in range(len(bin(num)[2:].zfill(16))):
+        instructionPointer[x] = bin(num)[2:].zfill(16)[x]
 
 
 def decode(strReg):
 
-    print(strReg)
+    retStrs = []
     opcode = ""
     registerA = ""
     registerB = ""
     destinationRegister = ""
 
     if strReg[0:4] == '0000':
-        opcode = "HALT"
+        retStrs.append("HALT")
+        return retStrs
     elif strReg[0:4] == '0001':
-        opcode = "ADD"
-        destinationRegister = translateregister(strReg[4:7])
-        registerA = translateregister(strReg[7:10])
+        retStrs.append("ADD")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(translateregister(strReg[7:10]))
         if strReg[10] == '0':
-            registerB = translateregister(strReg[13:16])
-            print(opcode + " " + destinationRegister + " " + registerA + " " + registerB)
+            retStrs.append("0")
+            retStrs.append(translateregister(strReg[13:16]))
         else:
-            print(opcode + " " + destinationRegister + " " + registerA + " " + strReg[11:16])
+            retStrs.append("1")
+            retStrs.append(strReg[11:16])
+        return retStrs
     elif strReg[0:4] == '0010':
-        opcode = "AND"
-        destinationRegister = translateregister(strReg[4:7])
-        registerA = translateregister(strReg[7:10])
+        retStrs.append("AND")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(translateregister(strReg[7:10]))
         if strReg[10] == '0':
-            registerB = translateregister(strReg[13:16])
-            print(opcode + " " + destinationRegister + " " + registerA + " " + registerB)
+            retStrs.append("0")
+            retStrs.append(translateregister(strReg[13:16]))
         else:
-            print(opcode + " " + destinationRegister + " " + registerA + " " + strReg[11:16])
+            retStrs.append("1")
+            retStrs.append(strReg[11:16])
+        return retStrs
     elif strReg[0:4] == '0011':
-        opcode = "NOT"
-        destinationRegister = translateregister(strReg[4:7])
-        registerA = translateregister(strReg[7:10])
-        print(opcode + " " + destinationRegister + " " + registerA)
+        retStrs.append("NOT")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(translateregister(strReg[7:10]))
+        return retStrs
     elif strReg[0:4] == '0100':
-        opcode = "LD"
-        destinationRegister = translateregister(strReg[4:7])
-        print(opcode + " " + destinationRegister + " " + strReg[7:16])
+        retStrs.append("LD")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '0101':
-        opcode = "LDI"
-        destinationRegister = translateregister(strReg[4:7])
-        print(opcode + " " + destinationRegister + " " + strReg[7:16])
+        retStrs.append("LDI")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '0110':
-        opcode = "LDR"
-        destinationRegister = translateregister(strReg[4:7])
-        registerA = translateregister(strReg[7:10])
-        print(opcode + " " + destinationRegister + " " + registerA + " " + strReg[10:16])
+        retStrs.append("LDR")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(translateregister(strReg[7:10]))
+        retStrs.append(strReg[10:16])
+        return retStrs
     elif strReg[0:4] == '0111':
-        opcode = "ST"
-        destinationRegister = translateregister(strReg[4:7])
-        print(opcode + " " + destinationRegister + " " + strReg[7:16])
+        retStrs.append("ST")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '1000':
-        opcode = "STI"
-        destinationRegister = translateregister(strReg[4:7])
-        print(opcode + " " + destinationRegister + " " + strReg[7:16])
+        retStrs.append("STI")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '1001':
-        opcode = "STR"
-        destinationRegister = translateregister(strReg[4:7])
-        registerA = translateregister(strReg[7:10])
-        print(opcode + " " + destinationRegister + " " + registerA + " " + strReg[10:16])
+        retStrs.append("STR")
+        retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(translateregister(strReg[7:10]))
+        retStrs.append(strReg[10:16])
+        return retStrs
     elif strReg[0:4] == '1010':
-        opcode = "GET"
-        destinationRegister = translateregister(strReg[4:7])
+        retStrs.append("GET")
+        retStrs.append(translateregister(strReg[4:7]))
+        return retStrs
     elif strReg[0:4] == '1011':
-        opcode = "PUT"
-        destinationRegister = translateregister(strReg[4:7])
+        retStrs.append("PUT")
+        retStrs.append(translateregister(strReg[4:7]))
+        return retStrs
     elif strReg[0:4] == '1100':
-        opcode = "BR"
-        print(opcode + " " + strReg[4:7] + " " + strReg[7:16])
+        retStrs.append("BR")
+        retStrs.append(strReg[4:7])
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '1101':
-        if strReg[4] == 0:
-            opcode = "JMP"
+        if strReg[4] == '0':
+            retStrs.append("JMP")
+            retStrs.append("0")
         else:
-            opcode = "JSR"
-        print(opcode + " " + strReg[7:16])
+            retStrs.append("JSR")
+            retStrs.append("1")
+        retStrs.append(strReg[7:16])
+        return retStrs
     elif strReg[0:4] == '1110':
-        if strReg[4] == 0:
-            opcode = "JMPR"
+        if strReg[4] == '0':
+            retStrs.append("JMPR")
+            retStrs.append("0")
         else:
-            opcode = "JSRR"
-        registerA = translateregister(strReg[7:10])
-        print(opcode + " " + registerA + " " + strReg[10:16])
+            retStrs.append("JSRR")
+            retStrs.append("1")
+        retStrs.append(translateregister(strReg[7:10]))
+        retStrs.append(strReg[10:16])
+        return retStrs
     elif strReg[0:4] == '1111':
-        opcode = "RET"
-        print(opcode)
+        retStrs.append("RET")
+        return retStrs
     else:
         print("Invalid Command Exception: Given Command Is Not Valid")
+
+
+def execute(cmds):
+    if cmds[0] == "ADD":
+        add(cmds)
+    elif cmds[0] == "GET":
+        get(cmds)
+    elif cmds[0] == "PUT":
+        put(cmds)
+
+
+def add(cmds):
+    numA = ""
+    numB = ""
+
+    for x in range(16):
+        numA += str(register[int(cmds[2][1])][x])
+
+    print(numA)
+    if cmds[3] == '0':
+        for x in range(16):
+            numB += str(register[int(cmds[4][1])][x])
+    else:
+        for x in range(5):
+            numB += str(cmds[4][x])
+        for x in range(11):
+            numB += numB[4]
+        numB = numB[::-1]
+    print(numB)
+
+    numA = signedInt("0b" + numA)
+    numB = signedInt("0b" + numB)
+    numC = numA + numB
+    numC = signedBin(numC, 16)[2:].zfill(16)
+    for x in range(16):
+        register[int(cmds[1][1])][x] = numC[x]
+
+
+def get(cmds):
+    val = input("Enter Integer: ")
+    if int(val) > 0:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 0
+        nzpRegister[2] = 1
+    elif int(val) < 0:
+        nzpRegister[0] = 1
+        nzpRegister[1] = 0
+        nzpRegister[2] = 0
+    else:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 1
+        nzpRegister[2] = 0
+
+    val = signedBin(int(val), 16)[2:].zfill(16)
+    reg = int(cmds[1][1])
+
+    for x in range(16):
+        register[reg][x] = int(val[x])
+
+
+
+def put(cmds):
+    val = ""
+    for x in range(16):
+        val += str(register[int(cmds[1][1])][x])
+    print(signedInt("0b" + val),end='')
 
 
 def translateregister(regStr):
@@ -240,6 +323,60 @@ def state():
             output+=" "
         output += str(instructionRegister[x])
     print(output)
+
+
+def binNBits(num, bits):
+    str = bin(num)
+
+    if num >= 0:
+        currentBits = len(str) - 2
+        bin1 = str[2:len(str)]
+        bin2 = "0b"
+    else:
+        currentBits = len(str) - 3
+        bin1 = str[3:len(str)]
+        bin2 = "-0b"
+
+    if currentBits > bits:
+        raise ValueError("Not Enough Bits")
+
+    while currentBits < bits:
+        bin2 += "0"
+        currentBits += 1
+
+    bin2 += bin1
+    return bin2
+
+
+def signedBin(num, bits):
+    if num == 0:
+        return binNBits(num, bits)
+    elif num > 0:
+        if num >= 2**(bits - 1):
+            raise ValueError("Not Enough Bits")
+        return binNBits(num, bits)
+    else:
+        if num <= -(2**(bits - 1)):
+            raise ValueError("Not Enough Bits")
+        return bin(num & (2**bits - 1))
+
+
+def signedInt(binNum):
+    if binNum[0:2] != "0b":
+        raise TypeError
+    total = 0
+    bin = binNum[2:]
+    revBin = bin[::-1]
+    if revBin[len(revBin) - 1] == "0":
+        for i in range(len(revBin) - 1):
+            if revBin[i] == "1":
+                total += 2**i
+    elif revBin[len(revBin) - 1] == "1":
+        total = -2**(len(revBin) - 1)
+        for i in range(len(revBin) - 1):
+            if revBin[i] == "1":
+                total += 2**i
+    return total
 
 
 startmachine()
