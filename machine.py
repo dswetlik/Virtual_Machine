@@ -211,6 +211,20 @@ def add(cmds):
     numA = signedInt("0b" + numA)
     numB = signedInt("0b" + numB)
     numC = numA + numB
+
+    if numC > 0:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 0
+        nzpRegister[2] = 1
+    elif numC < 0:
+        nzpRegister[0] = 1
+        nzpRegister[1] = 0
+        nzpRegister[2] = 0
+    else:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 1
+        nzpRegister[2] = 0
+
     numC = signedBin(numC, 16)[2:].zfill(16)
     for x in range(16):
         register[int(cmds[1][1])][x] = numC[x]
