@@ -199,6 +199,10 @@ def execute(cmds):
         andN(cmds)
     elif cmds[0] == "NOT":
         notN(cmds)
+    elif cmds[0] == "LD":
+        ld(cmds)
+    elif cmds[0] == "ST":
+        st(cmds)
 
 
 def add(cmds):
@@ -265,6 +269,38 @@ def notN(cmds):
     print(numA)
     for x in range(16):
         register[int(cmds[1][1])][x] = numA[x]
+
+
+def ld(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+    mem = ""
+    for x in range(16):
+        register[reg][x] = memory[address][x]
+        mem += str(memory[address][x])
+    updatenzp(signedInt("0b" + mem))
+
+
+def st(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+    mem = ""
+    for x in range(16):
+        memory[address][x] = register[reg][x]
 
 
 def get(cmds):
