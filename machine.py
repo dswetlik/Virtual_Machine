@@ -303,6 +303,45 @@ def st(cmds):
         memory[address][x] = register[reg][x]
 
 
+def ldi(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+    mem = 0
+    memb = ""
+    for x in range(16):
+        mem += memory[address][x]
+    for x in range(16):
+        register[reg][x] = memory[mem][x]
+        memb += memory[mem][x]
+
+    updatenzp(signedInt("0b" + memb))
+
+
+def sti(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+    mem = 0
+    for x in range(16):
+        mem += memory[address][x]
+    for x in range(16):
+        memory[mem][x] = register[reg][x]
+
+
+
 def get(cmds):
     val = input("Enter Integer: ")
     updatenzp(int(val))
