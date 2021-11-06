@@ -197,6 +197,8 @@ def execute(cmds):
             putc(cmds)
     elif cmds[0] == "AND":
         andN(cmds)
+    elif cmds[0] == "NOT":
+        notN(cmds)
 
 
 def add(cmds):
@@ -246,8 +248,23 @@ def andN(cmds):
 
     numC = signedInt("0b" + numA) & signedInt("0b" + numB)
     updatenzp(numC)
+    numC = signedBin(numC, 16)
     for x in range(16):
         register[int(cmds[1][1])][x] = numC[x]
+
+
+def notN(cmds):
+    numA = ""
+
+    for x in range(16):
+        numA += str(register[int(cmds[2][1])][x])
+
+    numA = ~signedInt("0b" + numA)
+    updatenzp(numA)
+    numA = signedBin(numA, 16)[2:]
+    print(numA)
+    for x in range(16):
+        register[int(cmds[1][1])][x] = numA[x]
 
 
 def get(cmds):
