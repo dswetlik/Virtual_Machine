@@ -209,7 +209,12 @@ def execute(cmds):
         sti(cmds)
     elif cmds[0] == "BR":
         br(cmds)
-
+    elif cmds[0] == "JMP":
+        jmp(cmds)
+    elif cmds[0] == "JSR":
+        jsr(cmds)
+    elif cmds[0] == "RET":
+        ret(cmds)
 
 
 def add(cmds):
@@ -365,6 +370,41 @@ def br(cmds):
         for x in range(16):
             instructionPointer[x] = memory[address][x]
 
+
+def jmp(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+    for x in range(16):
+        instructionPointer[x] = memory[address][x]
+
+
+def jsr(cmds):
+    addr = int(''.join(str(x) for x in instructionPointer), base=2)
+    minMem = (addr // 512) * 512
+    maxMem = ((addr // 512) + 1) * 512
+    reg = int(cmds[1][1])
+    offset = ""
+    for x in range(9):
+        offset += cmds[2][x]
+    offset = signedInt("0b" + offset)
+    address = offset + minMem
+
+    for x in range(16):
+        register[6][x] = instructionPointer[x]
+    for x in range(16):
+        instructionPointer[x] = memory[address][x]
+
+
+def ret(cmds):
+    for x in range(16):
+        instructionPointer[x] = register[6][x]
 
 
 def get(cmds):
