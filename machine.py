@@ -144,10 +144,12 @@ def decode(strReg):
     elif strReg[0:4] == '1010':
         retStrs.append("GET")
         retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7])
         return retStrs
     elif strReg[0:4] == '1011':
         retStrs.append("PUT")
         retStrs.append(translateregister(strReg[4:7]))
+        retStrs.append(strReg[7])
         return retStrs
     elif strReg[0:4] == '1100':
         retStrs.append("BR")
@@ -184,9 +186,17 @@ def execute(cmds):
     if cmds[0] == "ADD":
         add(cmds)
     elif cmds[0] == "GET":
-        get(cmds)
+        if cmds[2] == "0":
+            get(cmds)
+        else:
+            getc(cmds)
     elif cmds[0] == "PUT":
-        put(cmds)
+        if cmds[2] == "0":
+            put(cmds)
+        else:
+            putc(cmds)
+    elif cmds[0] == "AND":
+        andN(cmds)
 
 
 def add(cmds):
@@ -196,7 +206,6 @@ def add(cmds):
     for x in range(16):
         numA += str(register[int(cmds[2][1])][x])
 
-    print(numA)
     if cmds[3] == '0':
         for x in range(16):
             numB += str(register[int(cmds[4][1])][x])
@@ -206,44 +215,44 @@ def add(cmds):
         for x in range(11):
             numB += numB[4]
         numB = numB[::-1]
-    print(numB)
 
     numA = signedInt("0b" + numA)
     numB = signedInt("0b" + numB)
     numC = numA + numB
 
-    if numC > 0:
-        nzpRegister[0] = 0
-        nzpRegister[1] = 0
-        nzpRegister[2] = 1
-    elif numC < 0:
-        nzpRegister[0] = 1
-        nzpRegister[1] = 0
-        nzpRegister[2] = 0
-    else:
-        nzpRegister[0] = 0
-        nzpRegister[1] = 1
-        nzpRegister[2] = 0
+    updatenzp(numC)
 
     numC = signedBin(numC, 16)[2:].zfill(16)
     for x in range(16):
         register[int(cmds[1][1])][x] = numC[x]
 
 
+def andN(cmds):
+    numA = ""
+    numB = ""
+
+    for x in range(16):
+        numA += str(register[int(cmds[2][1])][x])
+
+    if cmds[3] == '0':
+        for x in range(16):
+            numB += str(register[int(cmds[4][1])][x])
+    else:
+        for x in range(5):
+            numB += str(cmds[4][x])
+        for x in range(11):
+            numB += numB[4]
+        numB = numB[::-1]
+
+    numC = signedInt("0b" + numA) & signedInt("0b" + numB)
+    updatenzp(numC)
+    for x in range(16):
+        register[int(cmds[1][1])][x] = numC[x]
+
+
 def get(cmds):
     val = input("Enter Integer: ")
-    if int(val) > 0:
-        nzpRegister[0] = 0
-        nzpRegister[1] = 0
-        nzpRegister[2] = 1
-    elif int(val) < 0:
-        nzpRegister[0] = 1
-        nzpRegister[1] = 0
-        nzpRegister[2] = 0
-    else:
-        nzpRegister[0] = 0
-        nzpRegister[1] = 1
-        nzpRegister[2] = 0
+    updatenzp(int(val))
 
     val = signedBin(int(val), 16)[2:].zfill(16)
     reg = int(cmds[1][1])
@@ -252,12 +261,30 @@ def get(cmds):
         register[reg][x] = int(val[x])
 
 
+def getc(cmds):
+    val = input("Input Character: ")
+    updatenzp(ord(val))
+
+    val = bin(ord(val))[2:].zfill(16)
+    reg = int(cmds[1][1])
+
+    for x in range(16):
+        register[reg][x] = int(val[x])
+
 
 def put(cmds):
     val = ""
     for x in range(16):
         val += str(register[int(cmds[1][1])][x])
     print(signedInt("0b" + val),end='')
+
+
+def putc(cmds):
+    val = ""
+    for x in range(16):
+        val += str(register[int(cmds[1][1])][x])
+    val = chr(int(val, base=2))
+    print(val, end='')
 
 
 def translateregister(regStr):
@@ -337,6 +364,21 @@ def state():
             output+=" "
         output += str(instructionRegister[x])
     print(output)
+
+
+def updatenzp(num):
+    if num > 0:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 0
+        nzpRegister[2] = 1
+    elif num < 0:
+        nzpRegister[0] = 1
+        nzpRegister[1] = 0
+        nzpRegister[2] = 0
+    else:
+        nzpRegister[0] = 0
+        nzpRegister[1] = 1
+        nzpRegister[2] = 0
 
 
 def binNBits(num, bits):
