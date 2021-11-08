@@ -256,15 +256,16 @@ def andN(cmds):
         for x in range(16):
             numB += str(register[int(cmds[4][1])][x])
     else:
-        for x in range(5):
-            numB += str(cmds[4][x])
+        numB = str(cmds[4][::-1])
         for x in range(11):
             numB += numB[4]
         numB = numB[::-1]
 
-    numC = signedInt("0b" + numA) & signedInt("0b" + numB)
+    numA = signedInt("0b" + numA)
+    numB = signedInt("0b" + numB)
+    numC = numA & numB
     updatenzp(numC)
-    numC = signedBin(numC, 16)
+    numC = signedBin(numC, 16)[2:]
     for x in range(16):
         register[int(cmds[1][1])][x] = numC[x]
 
