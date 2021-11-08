@@ -357,39 +357,40 @@ def br(cmds):
     addr = int(''.join(str(x) for x in instructionPointer), base=2)
     minMem = (addr // 512) * 512
     maxMem = ((addr // 512) + 1) * 512
-    reg = int(cmds[1][1])
+
     offset = ""
     for x in range(9):
         offset += cmds[2][x]
     offset = signedInt("0b" + offset)
-    address = offset + minMem
+    address = signedBin(offset + minMem, 16)[2:]
 
     if(cmds[1][0] == "1" and nzpRegister[0] == 1
     or cmds[1][1] == "1" and nzpRegister[1] == 1
     or cmds[1][2] == "1" and nzpRegister[2] == 1):
         for x in range(16):
-            instructionPointer[x] = memory[address][x]
+            instructionPointer[x] = address[x]
 
 
 def jmp(cmds):
     addr = int(''.join(str(x) for x in instructionPointer), base=2)
     minMem = (addr // 512) * 512
     maxMem = ((addr // 512) + 1) * 512
-    reg = int(cmds[1][1])
+
     offset = ""
     for x in range(9):
         offset += cmds[2][x]
     offset = signedInt("0b" + offset)
-    address = offset + minMem
+    address = signedBin(offset + minMem, 16)[2:]
+
     for x in range(16):
-        instructionPointer[x] = memory[address][x]
+        instructionPointer[x] = address[x]
 
 
 def jsr(cmds):
     addr = int(''.join(str(x) for x in instructionPointer), base=2)
     minMem = (addr // 512) * 512
     maxMem = ((addr // 512) + 1) * 512
-    reg = int(cmds[1][1])
+
     offset = ""
     for x in range(9):
         offset += cmds[2][x]
