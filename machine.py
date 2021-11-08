@@ -228,8 +228,7 @@ def add(cmds):
         for x in range(16):
             numB += str(register[int(cmds[4][1])][x])
     else:
-        for x in range(5):
-            numB += str(cmds[4][x])
+        numB = str(cmds[4][::-1])
         for x in range(11):
             numB += numB[4]
         numB = numB[::-1]
@@ -396,12 +395,12 @@ def jsr(cmds):
     for x in range(9):
         offset += cmds[2][x]
     offset = signedInt("0b" + offset)
-    address = offset + minMem
+    address = signedBin(offset + minMem, 16)[2:]
 
     for x in range(16):
         register[6][x] = instructionPointer[x]
     for x in range(16):
-        instructionPointer[x] = memory[address][x]
+        instructionPointer[x] = address[x]
 
 
 def ret(cmds):
