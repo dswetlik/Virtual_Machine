@@ -22,6 +22,8 @@ def cmd():
             runBool = 0
         if cmdIn.lower()[0:4] == "load":
             load(cmdIn)
+        if cmdIn.lower()[0:8] == "assemble":
+            assemble(cmdIn)
         if cmdIn.lower() == "dump":
             dump()
         if cmdIn.lower() == "registers":
@@ -40,10 +42,10 @@ def initregisters():
         register.append([0] * 16)
 
     for x in range(16):
-        instructionPointer.append([0])
-        instructionRegister.append([0])
+        instructionPointer.append(0)
+        instructionRegister.append(0)
     for x in range(3):
-        nzpRegister.append([0])
+        nzpRegister.append(0)
 
 
 def run():
@@ -448,6 +450,214 @@ def putc(cmds):
 def translateregister(regStr):
     regVal = "R" + str(int(regStr, base=2))
     return regVal
+
+
+def assemble(string):
+    args = string.split(" ")
+    lineC = 0
+    labels = []
+    labelsLines = []
+    opLabels = []
+    opLabelsLines = []
+    translation = []
+    startLocation = 0
+
+    if len(args) > 2:
+        print("Argument Out-Of-Bounds Exception:\nToo Many Arguments")
+    if len(args) < 2:
+        print("Argument Out-Of-Bounds Exception:\nToo Few Arguments")
+    if len(args[1]) < 5 or args[1][len(args[1]) - 4:len(args[1])] != ".asl":
+        print("Invalid File Exception:\nFile is too small or has incorrect extension.")
+    if exists(args[1]):
+        file = open(args[1], "r")
+        for line in file:
+            if line[0] == ';':
+                continue
+            spl = line.strip("\n").split("\t")
+            print(len(spl))
+            print(line)
+            if len(spl) == 3:
+                label = str(spl[0])
+                opcode = str(spl[1])
+                operands = spl[2].split(" ")
+            elif len(spl) == 2:
+                label = str(spl[0])
+                opcode = str(spl[1])
+            elif len(spl) == 1:
+                opcode = str(line[:len(line)]).strip("\n")
+            else:
+                break
+
+            print("Label: " + label)
+            print("Opcode: " + opcode)
+            print(list(operands))
+
+            if label != "":
+                labels.append(label)
+                labelsLines.append(lineC)
+
+            val = ""
+
+            if opcode == '.ORIG':
+                startLocation = int('0' + operands[0], base=16)
+                continue
+            if opcode == '.END':
+                val = "0000000000000000"
+            if opcode == '.SET':
+                num = signedBin(int(operands[0]), 16)[2:]
+                val = num
+            if opcode == '.FILL':
+                num = int('0' + operands[0], base=16)
+                print(num)
+                val = signedBin(num, 17)[3:]
+            if opcode == '.ASCII':
+                for c in operands[0]:
+                    num = bin(ord(c))[2:].zfill(16)
+                    val = num
+                val = "".zfill(16)
+            if opcode == '.BLOCK':
+                for x in range(int(operands[0])):
+                    val = "0000000000000000"
+
+
+            if opcode == 'ADD':
+                val += "0001"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                if(operands[1][0] == '#'):
+                    val += signedBin(int(operands[0][1]), 4)[3:]
+                    val += "1"
+                    val += signedBin(int(operands[1][1:]), 5)[2:]
+                else:
+                    val += signedBin(int(operands[1][1]), 4)[3:]
+                    if operands[2][0] == '#':
+                        val += "1"
+                        val += signedBin(int(operands[2][1:]), 5)[2:]
+                    else:
+                        val += "000"
+                        val += signedBin(int(operands[2][1]), 4)[3:]
+            if opcode == "AND":
+                val += "0010"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += signedBin(int(operands[1][1]), 4)[3:]
+                if operands[2][0] == '#':
+                    val += "1"
+                    val += signedBin(int(operands[2][1:]), 5)[2:]
+                else:
+                    val += "000"
+                    val += signedBin(int(operands[2][1]), 4)[3:]
+            if opcode == "NOT":
+                val += "0011"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += signedBin(int(operands[1][1]), 4)[3:]
+                val += "111111"
+            if opcode == "LD":
+                val += "0100"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                if operands[1][0] == 'x':
+                    val += signedBin(int('0' + operands[1], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[1]))
+                    opLabelsLines.append(lineC)
+            if opcode == "LDI":
+                val += "0101"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                if operands[1][0] == 'x':
+                    val += signedBin(int('0' + operands[1], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[1]))
+                    opLabelsLines.append(lineC)
+            if opcode == "ST":
+                val += "0111"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                if operands[1][0] == 'x':
+                    val += signedBin(int('0' + operands[1], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[1]))
+                    opLabelsLines.append(lineC)
+            if opcode == "STI":
+                val += "1000"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                if operands[1][0] == 'x':
+                    val += signedBin(int('0' + operands[1], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[1]))
+                    opLabelsLines.append(lineC)
+            if opcode == "GET":
+                val += "1010"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += "011111111"
+            if opcode == "GETC":
+                val += "1010"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += "111111111"
+            if opcode == "PUT":
+                val += "1011"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += "011111111"
+            if opcode == "PUTC":
+                val += "1011"
+                val += signedBin(int(operands[0][1]), 4)[3:]
+                val += "111111111"
+            if opcode == "BR":
+                val += "1100"
+                if operands[0] == "N":
+                    val += "100"
+                if operands[0] == "Z":
+                    val += "010"
+                if operands[0] == "P":
+                    val += "001"
+                if operands[0] == "NZ":
+                    val += "110"
+                if operands[0] == "ZP":
+                    val += "011"
+                if operands[0] == "NP":
+                    val += "101"
+                if operands[0] == "NZP":
+                    val += "111"
+                if operands[1][0] == 'x':
+                    val += signedBin(int('0' + operands[1], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[1]))
+                    opLabelsLines.append(lineC)
+            if opcode == "JMP":
+                val += "1101000"
+                if operands[0][0] == 'x':
+                    val += signedBin(int('0' + operands[0], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[0]))
+                    opLabelsLines.append(lineC)
+            if opcode == "JSR":
+                val += "1101100"
+                if operands[0][0] == 'x':
+                    val += signedBin(int('0' + operands[0], base=16), 16)[9:]
+                else:
+                    opLabels.append(str(operands[0]))
+                    opLabelsLines.append(lineC)
+            if opcode == "RET":
+                val += "1111000000000000"
+            if opcode == "HALT":
+                val += "0000000000000000"
+
+            translation.append(val)
+            lineC += 1
+
+        for i in range(len(opLabels)):
+            for j in range(len(labels)):
+                if opLabels[i] == labels[j]:
+                    addr = labelsLines[j]
+                    translation[opLabelsLines[i]] += signedBin(addr, 16)[9:]
+        print(str(startLocation))
+        for line in translation:
+            print(line)
+        print("///")
+        for x in range(16):
+            instructionPointer[x] = bin(startLocation)[2:].zfill(16)[x]
+        for line in translation:
+            print(line)
+            for x in range(16):
+                memory[startLocation][x] = line[x]
+            startLocation += 1
+
 
 
 def load(string):
