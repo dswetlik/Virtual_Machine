@@ -1,0 +1,6 @@
+	.ORIG	x0000
+	GET	R0
+	ADD	R0 R0 #1
+	PUT	R0
+	HALT
+	.END

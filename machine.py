@@ -17,7 +17,7 @@ def startmachine():
 def cmd():
     runBool = 1
     while runBool == 1:
-        cmdIn = input(":: ")
+        cmdIn = input("\n:: ")
         if cmdIn.lower() == "break":
             runBool = 0
         if cmdIn.lower()[0:4] == "load":
@@ -52,7 +52,6 @@ def run():
     while True:
         fetch()
         cmds = decode(''.join(instructionRegister))
-        print(list(cmds))
         execute(cmds)
 
         if (''.join(instructionRegister[0:4]) == '0000'):
@@ -280,7 +279,6 @@ def notN(cmds):
     numA = ~signedInt("0b" + numA)
     updatenzp(numA)
     numA = signedBin(numA, 16)[2:]
-    print(numA)
     for x in range(16):
         register[int(cmds[1][1])][x] = numA[x]
 
@@ -474,8 +472,6 @@ def assemble(string):
             if line[0] == ';':
                 continue
             spl = line.strip("\n").split("\t")
-            print(len(spl))
-            print(line)
             if len(spl) == 3:
                 label = str(spl[0])
                 opcode = str(spl[1])
@@ -487,10 +483,6 @@ def assemble(string):
                 opcode = str(line[:len(line)]).strip("\n")
             else:
                 break
-
-            print("Label: " + label)
-            print("Opcode: " + opcode)
-            print(list(operands))
 
             if label != "":
                 labels.append(label)
@@ -508,7 +500,6 @@ def assemble(string):
                 val = num
             if opcode == '.FILL':
                 num = int('0' + operands[0], base=16)
-                print(num)
                 val = signedBin(num, 17)[3:]
             if opcode == '.ASCII':
                 for c in operands[0]:
@@ -646,14 +637,10 @@ def assemble(string):
                 if opLabels[i] == labels[j]:
                     addr = labelsLines[j]
                     translation[opLabelsLines[i]] += signedBin(addr, 16)[9:]
-        print(str(startLocation))
-        for line in translation:
-            print(line)
-        print("///")
+
         for x in range(16):
             instructionPointer[x] = bin(startLocation)[2:].zfill(16)[x]
         for line in translation:
-            print(line)
             for x in range(16):
                 memory[startLocation][x] = line[x]
             startLocation += 1
