@@ -649,17 +649,15 @@ def assemble(string):
 
 def load(string):
     args = string.split(" ")
-    if len(args) > 3:
+    if len(args) > 2:
         print("Argument Out-Of-Bounds Exception:\nToo Many Arguments")
-    if len(args) < 3:
+    if len(args) < 2:
         print("Argument Out-Of-Bounds Exception:\nToo Few Arguments")
     if len(args[1]) < 5 or args[1][len(args[1]) - 4:len(args[1])] != ".eoc":
         print("Invalid File Exception:\nFile is too small or has incorrect extension.")
-    if len(args[2]) != 4:
-        print("Invalid Memory Location:\nPlease use 4 hexadecimal characters 0000-FFFF")
     if exists(args[1]):
         file = open(args[1], "r")
-        addr = int('0x' + args[2], base=16)
+        addr = int('0b' + file.readline(), base=2)
         for x in range(len(bin(addr)[2:].zfill(16))):
             instructionPointer[x] = bin(addr)[2:].zfill(16)[x]
         for line in file:
