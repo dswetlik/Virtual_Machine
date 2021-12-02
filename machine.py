@@ -381,7 +381,6 @@ def jmp(cmds):
         offset += cmds[2][x]
     offset = signedInt("0b" + offset)
     address = signedBin(offset + minMem, 16)[2:]
-
     for x in range(16):
         instructionPointer[x] = address[x]
 
@@ -398,14 +397,14 @@ def jsr(cmds):
     address = signedBin(offset + minMem, 16)[2:]
 
     for x in range(16):
-        register[6][x] = instructionPointer[x]
+        register[7][x] = instructionPointer[x]
     for x in range(16):
         instructionPointer[x] = address[x]
 
 
 def ret(cmds):
     for x in range(16):
-        instructionPointer[x] = register[6][x]
+        instructionPointer[x] = register[7][x]
 
 
 def get(cmds):
@@ -504,12 +503,15 @@ def assemble(string):
             if opcode == '.ASCII':
                 for c in operands[0]:
                     num = bin(ord(c))[2:].zfill(16)
-                    val = num
-                val = "".zfill(16)
+                    translation.append(num)
+                    lineC += 1
+                continue
             if opcode == '.BLOCK':
                 for x in range(int(operands[0])):
                     val = "0000000000000000"
-
+                    translation.append(val)
+                    lineC += 1
+                continue
 
             if opcode == 'ADD':
                 val += "0001"
@@ -635,7 +637,7 @@ def assemble(string):
         for i in range(len(opLabels)):
             for j in range(len(labels)):
                 if opLabels[i] == labels[j]:
-                    addr = labelsLines[j]
+                    addr = labelsLines[j] + startLocation
                     translation[opLabelsLines[i]] += signedBin(addr, 16)[9:]
 
         for x in range(16):
